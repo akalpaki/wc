@@ -2,6 +2,10 @@ WC.go
 ---
 Golang implementation of the unix WC program
 
+Uses:
+1. You can pass a file name as an argument.
+2. If you choose not to pass an argument, you will instead provide input from stdin. This allows you to use UNIX pipes to pipe input into the product.
+
 Setup
 ---
 ```go

@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-	// parse flags
 	var modeBytes bool
 	var modeLines bool
 	var modeWords bool
@@ -28,21 +27,54 @@ func main() {
 		modeWords = true
 	}
 
-	// get reader (TODO: implement stdin)
-	filename := flag.Arg(0)
-	if filename == "" {
-		fmt.Println("STDIN not implemented.")
-		os.Exit(1)
+	inputName := flag.Arg(0)
+	// if user has not specified file, we start collecting lines from stdin until
+	// SIGINT is given, and then feed that to our read()
+	if inputName == "" {
+		tmp, err := os.CreateTemp("", "tmp")
+		defer tmp.Close()
+		if err != nil {
+			fmt.Printf("could not create temp file: %s", err.Error())
+			os.Exit(1)
+		}
+		inputBuffer := bufio.NewScanner(os.Stdin)
+		inputBuffer.Split(bufio.ScanBytes)
+		for inputBuffer.Scan() {
+			tmp.Write(inputBuffer.Bytes())
+		}
+		read(modeBytes, modeLines, modeWords, modeChars, tmp, "")
+		os.Exit(0)
 	}
-	rdr, err := os.Open(filename)
+
+	f, err := os.Open(inputName)
 	if err != nil {
 		fmt.Println("unable to open file")
 		os.Exit(1)
 	}
-	defer rdr.Close()
+	defer f.Close()
+	rdr := io.ReadSeeker(f)
 
-	// read data from reader
-	// create buffers
+	read(modeBytes, modeLines, modeWords, modeChars, rdr, inputName)
+}
+
+func resetFile(f io.ReadSeeker) {
+	_, err := f.Seek(0, io.SeekStart)
+	if err != nil {
+		fmt.Printf("failed to reset file: %s", err.Error())
+		os.Exit(1)
+	}
+}
+
+func checkNoFlags(flags []bool) bool {
+	for _, flag := range flags {
+		if flag {
+			return true
+		}
+	}
+	return false
+}
+
+func read(modeBytes, modeLines, modeWords, modeChars bool, rdr io.ReadSeeker, inputName string) {
 	var numBytes int
 	var numLines int
 	var numWords int
@@ -88,22 +120,5 @@ func main() {
 		output += fmt.Sprintf(" %d ", numChars)
 	}
 
-	fmt.Printf("%s %s\n", output, filename)
-}
-
-func resetFile(f *os.File) {
-	_, err := f.Seek(0, io.SeekStart)
-	if err != nil {
-		fmt.Printf("failed to reset file: %s", err.Error())
-		os.Exit(1)
-	}
-}
-
-func checkNoFlags(flags []bool) bool {
-	for _, flag := range flags {
-		if flag {
-			return true
-		}
-	}
-	return false
+	fmt.Printf("%s %s\n", output, inputName)
 }
