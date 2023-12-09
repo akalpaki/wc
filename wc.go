@@ -27,6 +27,14 @@ func main() {
 	flag.BoolVar(&modeChars, "m", false, "character mode: prints the number of characters in input")
 	flag.Parse()
 
+	flags := []bool{modeBytes, modeLines, modeWords, modeChars}
+	if !checkNoFlags(flags) {
+		// if no flags, use default setup -c -l -w
+		modeBytes = true
+		modeLines = true
+		modeWords = true
+	}
+
 	// get reader (TODO: implement stdin)
 	filename := flag.Arg(0)
 	if filename == "" {
@@ -96,4 +104,13 @@ func resetFile(f *os.File) {
 		fmt.Printf("failed to reset file: %s", err.Error())
 		os.Exit(1)
 	}
+}
+
+func checkNoFlags(flags []bool) bool {
+	for _, flag := range flags {
+		if flag {
+			return true
+		}
+	}
+	return false
 }
