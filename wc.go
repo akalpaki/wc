@@ -8,13 +8,6 @@ import (
 	"os"
 )
 
-func checkError(err error, msg string) {
-	if err != nil {
-		fmt.Printf("ccwc: %s: %s", msg, err.Error())
-		os.Exit(1)
-	}
-}
-
 func main() {
 	// parse flags
 	var modeBytes bool
